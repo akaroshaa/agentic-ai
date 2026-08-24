@@ -28,12 +28,12 @@ docs = [
     ]
 print(f"Document has {len(docs)} pages")
 
-# # 2. Splitting the document into chunks
-# text_splitter = RecursiveCharacterTextSplitter(
-#     chunk_size=1000, chunk_overlap=200, add_start_index=True
-# )
-# all_splits = text_splitter.split_documents(docs)
-# print(f"Number of text splits: {len(all_splits)}")
+# 2. Splitting the document into chunks
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=1000, chunk_overlap=200, add_start_index=True
+)
+all_splits = text_splitter.split_documents(docs)
+print(f"Number of text splits: {len(all_splits)}")
 
 
 # 3. Setup Embeddings
@@ -53,8 +53,8 @@ vector_store = AzureSearch(
 )
 
 # 5. Index chunks
-# ids = vector_store.add_documents(documents=all_splits)
-# print(f"Indexed {len(ids)} document chunks to Azure AI Search.")
+ids = vector_store.add_documents(documents=all_splits)
+print(f"Indexed {len(ids)} document chunks to Azure AI Search.")
 
 
 # 6. Query the Azure AI Search index

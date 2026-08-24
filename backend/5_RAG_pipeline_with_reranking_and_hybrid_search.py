@@ -1,6 +1,19 @@
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+# ============================================================
+# Hybrid Search (Keyword + Semantic) + Flashrank
+# ============================================================
+
+from flashrank import Ranker
+from langchain_classic.retrievers.contextual_compression import ContextualCompressionRetriever
+from langchain_community.document_compressors import FlashrankRerank
+
+# ============================================================
+
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 import os
 from dotenv import load_dotenv
 import pypdf
@@ -18,7 +31,7 @@ AzureSearch.__del__ = lambda self: None
 
 load_dotenv()
 
-# pdf_path = "C:/Users/HP/Downloads/Comm626.pdf" 
+# pdf_path = "C:/Users/HP/Downloads/Comm626.pdf"
 
 # # 1. Load the PDF and create Document objects
 # reader = pypdf.PdfReader(pdf_path)
@@ -63,10 +76,59 @@ vector_store = AzureSearch(
 
 # 6. Query the Azure AI Search index
 query = "What is the key takeaway from the document?"
-retriever = vector_store.as_retriever(
-    search_type="similarity", k=3
+
+
+
+# =====================================================================
+#                           IF NOT USING AZURE 
+# =====================================================================
+
+
+# # ---  BUILD HYBRID RETRIEVER (BM25 + Vector Search) ---
+
+# # pip install rank-bm25
+
+# # from langchain_community.retrievers import BM25Retriever
+# # from langchain_classic.retrievers import EnsembleRetriever
+
+# # A. Dense Vector Retriever
+# vector_retriever = vector_store.as_retriever(search_type="similarity", k=6)
+
+# # B. Sparse BM25 Keyword Retriever (Built from document chunks)
+# bm25_retriever = BM25Retriever.from_documents(all_splits)
+# bm25_retriever.k = 6
+
+# # C. Combine both with Ensemble (50% BM25, 50% Vector)
+# hybrid_ensemble_retriever = EnsembleRetriever(
+#     retrievers=[bm25_retriever, vector_retriever],
+#     weights=[0.5, 0.5]
+# )
+
+# base_compressor = FlashrankRerank(top_n=3)
+
+# flashrank_retriever = ContextualCompressionRetriever(
+#     base_retriever=hybrid_ensemble_retriever,
+#     base_compressor=base_compressor
+# )
+
+
+base_retriever = vector_store.as_retriever(
+    search_type="hybrid", k=10
     )
 
+base_compressor = FlashrankRerank(top_n=3)
+
+flashrank_retriever = ContextualCompressionRetriever(
+    base_retriever=base_retriever,
+    base_compressor=base_compressor
+)
+
+# reranked_results = flashrank_retriever.invoke(query)
+# for i, doc in enumerate(reranked_results):
+#     score = doc.metadata.get("relevance_score", "N/A")
+#     print(f"  [{i+1}] Relevance Score: {score}")
+#     print(f"      \"{doc.page_content[:150]}...\"")
+#     print()
 
 llm = AzureChatOpenAI(
         azure_endpoint=os.environ.get("AZURE_ENDPOINT"),
@@ -91,7 +153,7 @@ Answer:"""
 prompt = ChatPromptTemplate.from_template(template)
 
 rag_chain = (
-    {"context": retriever | (lambda docs: "\n\n".join(d.page_content for d in docs)), "question": RunnablePassthrough()}
+    {"context": flashrank_retriever | (lambda docs: "\n\n".join(d.page_content for d in docs)), "question": RunnablePassthrough()}
     | prompt
     | llm
     | StrOutputParser()

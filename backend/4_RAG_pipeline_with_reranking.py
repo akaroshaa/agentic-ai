@@ -1,6 +1,19 @@
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+# ============================================================
+# RERANKER 1: FlashRank
+# ============================================================
+
+from flashrank import Ranker
+from langchain_classic.retrievers.contextual_compression import ContextualCompressionRetriever
+from langchain_community.document_compressors import FlashrankRerank
+
+# ============================================================
+
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 import os
 from dotenv import load_dotenv
 import pypdf
@@ -63,10 +76,24 @@ vector_store = AzureSearch(
 
 # 6. Query the Azure AI Search index
 query = "What is the key takeaway from the document?"
-retriever = vector_store.as_retriever(
-    search_type="similarity", k=3
+
+base_retriever = vector_store.as_retriever(
+    search_type="similarity", k=6
     )
 
+base_compressor = FlashrankRerank(top_n=3)
+
+flashrank_retriever = ContextualCompressionRetriever(
+    base_retriever=base_retriever,
+    base_compressor=base_compressor
+)
+
+# reranked_results = flashrank_retriever.invoke(query)
+# for i, doc in enumerate(reranked_results):
+#     score = doc.metadata.get("relevance_score", "N/A")
+#     print(f"  [{i+1}] Relevance Score: {score}")
+#     print(f"      \"{doc.page_content[:150]}...\"")
+#     print()
 
 llm = AzureChatOpenAI(
         azure_endpoint=os.environ.get("AZURE_ENDPOINT"),
@@ -91,7 +118,7 @@ Answer:"""
 prompt = ChatPromptTemplate.from_template(template)
 
 rag_chain = (
-    {"context": retriever | (lambda docs: "\n\n".join(d.page_content for d in docs)), "question": RunnablePassthrough()}
+    {"context": flashrank_retriever | (lambda docs: "\n\n".join(d.page_content for d in docs)), "question": RunnablePassthrough()}
     | prompt
     | llm
     | StrOutputParser()
