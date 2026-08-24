@@ -10,7 +10,7 @@ def call_azure_openai_llm(user_input):
     llm = AzureChatOpenAI(
         azure_endpoint="https://crook-mt496dmp-eastus2.openai.azure.com/",
         azure_deployment="sample-gpt-4o-deployment",
-        api_key=os.environ.get("azure_openai_api_key"),
+        api_key=os.environ.get("AZURE_OPENAI_API_KEY"),
         api_version="2024-12-01-preview",
         temperature=0.5,
         top_p=1.0,
