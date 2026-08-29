@@ -11,8 +11,6 @@ from langchain_community.document_compressors import FlashrankRerank
 
 # ============================================================
 
-import warnings
-warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import os
 from dotenv import load_dotenv
