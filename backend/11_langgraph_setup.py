@@ -1,7 +1,6 @@
 from typing import Literal, TypedDict
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import AzureChatOpenAI
-from langchain.agents import create_agent
 from langgraph.graph import START, END, StateGraph
 import os
 from dotenv import load_dotenv
@@ -42,8 +41,11 @@ graph.add_edge("greet the user", END)
 workflow = graph.compile()
 
 # Save the visual graph to a PNG file
-with open("graph.png", "wb") as f:
+with open("11_graph.png", "wb") as f:
     f.write(workflow.get_graph().draw_mermaid_png())
 
-result = workflow.invoke({"topic": "what is a LangGraph node", "reply": ""})
+result = workflow.invoke({
+    "topic": "what is a LangGraph node",
+    "reply": ""
+    })
 print("Graph State --->  ", result["reply"])
