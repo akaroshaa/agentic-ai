@@ -43,7 +43,7 @@ llm_with_tools = llm.bind_tools(tools)
 def agent_node(state: MessagesState) -> dict:
     """A node that uses the LLM with tools to process messages."""
 
-    print("=========  state['messages']  ================\n")
+    print("=========  state['messages'] inside 'agent_node'  ================\n")
     for message in state["messages"]:
         print(type(message).__name__," ---> ",message)
         print()
