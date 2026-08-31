@@ -43,7 +43,7 @@ llm_with_tools = llm.bind_tools(tools)
 def agent_node(state: MessagesState) -> dict:
     """A node that uses the LLM with tools to process messages."""
 
-    print("=========  state['messages'] before LLM call  ================\n")
+    print("=========  state['messages']  ================\n")
     for message in state["messages"]:
         print(type(message).__name__," ---> ",message)
         print()
@@ -57,20 +57,15 @@ def agent_node(state: MessagesState) -> dict:
     print("result = ", result.content)
     print("-------------------------------\n")
 
-    print("=========  state['messages'] after LLM call  ================\n")
-    for message in state["messages"]:
-        print(type(message).__name__," ---> ",message)
-        print()
-    print("===============================================\n\n")
-    
     return {"messages": [result]}
+
 
 def should_continue(state: MessagesState) -> Literal["tools", "__end__"]:
     """Determine if tools are required based on the messages."""
     # For simplicity, let's say if the last message contains "weather" or "add", we need tools
     messages = state.get("messages", [])
 
-    print("========= inside should_continue state['messages']  ================\n")
+    print("=========  state['messages'] inside 'should_continue'  ================\n")
     for message in state["messages"]:
         print(type(message).__name__," ---> ",message)
         print()
