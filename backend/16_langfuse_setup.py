@@ -1,7 +1,3 @@
-# ===============================================================================
-#   Its the "ToolNode" (not LLM) which executes the tools and updates the state by 
-#   appending the result as a ToolMessage in the GraphState
-# ===============================================================================
 
 from langchain_core.tools import tool
 from langgraph.graph.message import MessagesState
@@ -13,8 +9,11 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, Tool
 from langgraph.graph import START, END, StateGraph
 import json
 from dotenv import load_dotenv
+from langfuse.langchain import CallbackHandler
 
 load_dotenv()
+
+langfuse_handler = CallbackHandler()
 
 llm = AzureChatOpenAI(
         azure_endpoint=os.environ.get("AZURE_ENDPOINT"),
@@ -95,8 +94,17 @@ graph.add_edge("Tools Node", "Agent Node")
 workflow = graph.compile()
 
 # Save the visual graph to a PNG file
-with open("14_graph.png", "wb") as f:
+with open("16_graph.png", "wb") as f:
     f.write(workflow.get_graph().draw_mermaid_png())
+
+config = {
+    "callbacks": [langfuse_handler],
+    "metadata": {
+        "user_id": "user_demo_001",
+        "session_id": "session_001",
+        "environment": "development",
+    }
+}
 
 result = workflow.invoke(
     {
@@ -108,6 +116,9 @@ result = workflow.invoke(
                 # content="What is the capital of India?"
             )
         ]
-    }
+    }, config=config
 )
+
 print("\nFinal AI Response: ",result["messages"][-1].content)
+
+print("\nLangfuse logs flushed successfully...")
